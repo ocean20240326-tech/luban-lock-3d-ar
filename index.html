@@ -2,11 +2,141 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>六通鲁班锁</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="在线旋转、缩放查看六通鲁班锁3D模型，无需下载App。"
+    />
+    <meta name="theme-color" content="#f3eadb" />
+    <title>六通鲁班锁｜手机端3D展示</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div class="app-shell" id="app">
+      <header class="site-header">
+        <div class="title-mark" aria-hidden="true"><span></span></div>
+        <div>
+          <p class="eyebrow">LUBAN LOCK · 3D</p>
+          <h1>六通鲁班锁</h1>
+          <p class="subtitle">用手指旋转、缩放查看模型</p>
+        </div>
+      </header>
+
+      <main class="viewer-section">
+        <section class="viewer-card" aria-label="鲁班锁3D展示区域">
+          <div class="viewer-frame" id="viewerFrame" data-status="checking">
+            <model-viewer
+              id="lubanViewer"
+              alt="六通鲁班锁3D模型"
+              camera-controls
+              camera-orbit="35deg 68deg 115%"
+              camera-target="auto auto auto"
+              field-of-view="30deg"
+              min-camera-orbit="auto auto 75%"
+              max-camera-orbit="auto auto 170%"
+              min-field-of-view="24deg"
+              max-field-of-view="42deg"
+              shadow-intensity="0.8"
+              shadow-softness="0.9"
+              exposure="1.05"
+              environment-image="neutral"
+              interaction-prompt="auto"
+              interaction-prompt-threshold="2500"
+              loading="eager"
+              rotation-per-second="16deg"
+            ></model-viewer>
+
+            <div
+              class="status-panel loading-panel"
+              id="loadingPanel"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <div class="loader-emblem" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <p class="status-title" id="statusMessage">正在检查3D模型……</p>
+              <div
+                class="progress-track"
+                id="progressBar"
+                role="progressbar"
+                aria-label="3D模型加载进度"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span class="progress-fill" id="progressFill"></span>
+              </div>
+              <p class="progress-text" id="progressText">0%</p>
+            </div>
+
+            <div
+              class="status-panel error-panel"
+              id="errorPanel"
+              aria-live="assertive"
+              aria-atomic="true"
+              hidden
+            >
+              <div class="error-symbol" aria-hidden="true">!</div>
+              <p class="status-title" id="errorMessage"></p>
+              <button
+                class="secondary-button retry-button"
+                id="retryButton"
+                type="button"
+                aria-label="重新加载3D模型"
+              >
+                重新加载
+              </button>
+            </div>
+
+            <div class="orientation-hint" aria-hidden="true">
+              <span class="orientation-cube"></span>
+              360° VIEW
+            </div>
+          </div>
+
+          <div class="controls" id="controls" aria-label="3D模型控制" hidden>
+            <button
+              class="control-button"
+              id="rotationButton"
+              type="button"
+              aria-label="暂停模型自动旋转"
+              aria-pressed="true"
+            >
+              <span class="button-icon" aria-hidden="true">Ⅱ</span>
+              <span id="rotationButtonText">暂停旋转</span>
+            </button>
+            <button
+              class="control-button"
+              id="resetViewButton"
+              type="button"
+              aria-label="恢复模型初始视角"
+            >
+              <span class="button-icon reset-icon" aria-hidden="true">↺</span>
+              <span>恢复初始视角</span>
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="usage-notes" aria-label="使用说明">
+          <span><i class="gesture-dot" aria-hidden="true"></i>单指旋转，双指缩放</span>
+          <span><i class="app-dot" aria-hidden="true"></i>无需下载App</span>
+        </div>
+        <p class="attribution">
+          模型：LinLUCAS ·
+          <a
+            href="https://sketchfab.com/3d-models/lu-ban-lock-d7abd39400044c47981fe94565301aa3"
+            target="_blank"
+            rel="noreferrer"
+          >CC BY 4.0</a>
+        </p>
+      </footer>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
