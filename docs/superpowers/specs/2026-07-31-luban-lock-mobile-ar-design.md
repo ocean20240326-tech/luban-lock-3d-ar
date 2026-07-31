@@ -3,7 +3,7 @@
 ## 状态
 
 - 设计日期：2026-07-31
-- 状态：方案已由用户批准
+- 状态：方案 1 已批准；追加实施规则待书面复核
 - 选定方案：外层安全包装，不重建动画层级
 - 视觉方向：浅色榉木 / 白橡
 - 贴图来源：Poly Haven `oak_veneer_01`，CC0，1K
@@ -31,9 +31,12 @@
 ### 输出
 
 - `C:\Users\Ocean\Documents\榫卯\outputs\lu_ban_lock_mobile_ar.blend`
+- `C:\Users\Ocean\Documents\榫卯\outputs\lu_ban_lock_mobile_ar.temp.glb`（验证前临时文件）
 - `C:\Users\Ocean\Documents\榫卯\outputs\lu_ban_lock_mobile_ar.glb`
+- `C:\Users\Ocean\Documents\榫卯\outputs\validation\lu_ban_lock_mobile_ar.validation.json`
+- `C:\Users\Ocean\Documents\榫卯\outputs\validation\lu_ban_lock_mobile_ar.validation.md`
 
-只有在全部验收检查通过后才把导出的 GLB 视为交付物。若中途失败，保留 Blender 工作状态和诊断信息，但不覆盖已有同名输出。
+正式 GLB 只能由已通过全部验证的 `.temp.glb` 在同一目录内原子重命名产生。若验证失败，不创建正式 GLB 文件名；改为保留带时间戳的诊断 Blend、临时 GLB、JSON 报告和 Markdown 报告。任何输出均不得覆盖已有同名文件。
 
 ## 方案选择
 
@@ -51,19 +54,39 @@
 
 把每个逻辑零件的子几何合并后重新整理动画绑定。运行时结构最干净，但属于更高风险的结构性重制，不在本次范围内。
 
+## 轻量导入门禁
+
+导入源 GLB 后、执行任何缩放、重命名、UV、材质下载或材质修改之前，只做以下轻量检查：
+
+1. 确认对象 `1_6`、`2_13`、`3_17`、`4_21`、`5_25`、`6_27` 全部存在且名称唯一。
+2. 记录 Blender 的实际动画组织方式：
+   - `bpy.data.actions` 中每个 Action 的名称、frame range、用户数、FCurve 数和目标数据路径；
+   - 六个目标对象各自的 `animation_data.action`；
+   - 每个目标对象的 NLA track、strip 名称、Action 引用和 frame range。
+3. 尝试分别激活并播放/求值 `Assemble` 与 `Disassemble` 的起点和终点，确认六个对象的变换可正常求值且为有限数值。
+4. Blender glTF 导入器把一个源 clip 表示为多个对象级 Action 或 NLA strip 本身不判为失败；只有当这些 Action/strip 无法按 `Assemble`、`Disassemble` 重新关联为覆盖六个目标对象的完整 clip 时，才视为异常拆分。
+5. 出现任一以下情况立即停止，不进入任何修改步骤：
+   - 六个目标对象缺失、重复或类型异常；
+   - `Assemble` 或 `Disassemble` 丢失；
+   - 任一 clip 缺少应有的零件通道；
+   - Action/NLA 关系无法确定、clip 无法激活或无法求值；
+   - 求值产生 NaN、无穷、零比例、异常跳变或 Blender 播放错误。
+
+导入门禁的记录必须写入最终验证报告；若门禁失败，则写入失败报告和诊断 Blend，并停止。由于门禁发生在导出前，此类失败不会产生临时 GLB。
+
 ## 场景和单位设计
 
 1. 清空 Blender 当前场景后导入源 GLB。
 2. 将 Scene Unit System 设置为 `METRIC`，Unit Scale 设置为 `1.0`，Length 设置为 `MILLIMETERS`。
 3. 在所有现有顶层对象之上新增 Empty：`LB_AR_Root`。
 4. 将原顶层对象父级设为 `LB_AR_Root`，保持父级创建前的世界变换。
-5. 在静态组装状态计算全部 Mesh 的世界坐标包围盒。
-6. 对 `LB_AR_Root` 使用统一缩放系数 `0.0803808599`。不得分别缩放六个动画零件。
+5. 对 `LB_AR_Root` 使用审计已确认的统一缩放系数 `0.0803808599`。实施时不得重新推导或替换该系数，也不得分别缩放六个动画零件。
+6. 在静态组装状态计算全部 Mesh 的世界坐标包围盒；此计算只用于根级居中、落地和最终尺寸验证，不用于重新计算缩放系数。
 7. 缩放后再次计算包围盒，以 Blender Z 轴为竖直轴：
    - 根节点在 X/Y 方向平移包围盒中心的相反数，使模型水平居中；
    - 根节点在 Z 方向平移包围盒最小值的相反数，使底面位于 `Z=0`；
    - 不直接修改六个动画目标节点的静态变换。
-8. 最终静态组装包围盒的最大尺寸必须为 `0.075 m`，允许的数值误差为 `±0.00001 m`。
+8. Blender 内最终静态组装包围盒必须满足：最大尺寸 `0.075 m ± 0.00001 m`、`min Z = 0 ± 0.00001 m`、X/Y 水平中心均为 `0 ± 0.00001 m`。
 
 `LB_AR_Root` 可以保留非 1 的统一缩放；这是为了避免把缩放烘焙到带动画的子节点。导出的 glTF 世界尺寸仍必须正确。
 
@@ -104,12 +127,13 @@
 - Alpha/Surface Render Method：Opaque
 - Backface Culling：启用
 - Normal strength：以 Poly Haven 导入默认值为起点，限制为不会在 75 mm 模型上产生夸张沟槽的细腻效果
+- 纹理坐标链路：显式使用一个 UV Map 节点读取 `LB_WoodUV`，再连接到一个共享 Mapping 节点；Base Color、Normal、Roughness 三个 Image Texture 的 Vector 输入必须来自同一个 Mapping 输出
 
 ### UV 设计
 
 现有 UV 只服务于 128 × 16 调色板，不适合木纹。为全部 Mesh 新建 UV 层 `LB_WoodUV`，保留原 UV 层但把 `LB_WoodUV` 设为活动渲染 UV。
 
-UV 根据每个逻辑零件的局部坐标生成，使纹理沿零件长轴连续。六个零件的世界长轴虽为 X/Y/Z，但其子几何在逻辑零件局部空间中按统一规则映射。相邻子 Mesh 使用同一逻辑零件坐标范围，避免每个小块各自从 UV 原点重新开始造成明显接缝。
+UV 根据每个逻辑零件的统一局部坐标生成，使纹理沿零件长轴连续。六个零件的世界长轴虽为 X/Y/Z，但其子几何必须先转换到所属 `LB_Part` 的同一逻辑零件坐标系，再按统一尺度写入 UV。禁止对 22 个子 Mesh 分别独立归一化、分别执行 `Smart UV Project` 或分别把各自包围盒映射到 0–1。相邻子 Mesh 必须共享同一逻辑零件坐标范围，避免每个小块从 UV 原点重新开始造成纹理接缝和尺度变化。
 
 木纹尺度以手机屏幕可读性为优先：单根约 75 mm 长轴上保留清晰但不过密的连续纹理。端面继续使用同一纹理投影，不增加第二套端面材质。
 
@@ -126,24 +150,40 @@ UV 根据每个逻辑零件的局部坐标生成，使纹理沿零件长轴连�
 5. `Assemble` 终点必须回到静态组装姿态。
 6. `Disassemble` 起点必须与静态组装姿态一致。
 7. 根级缩放必须只出现一次，不得在六个零件上产生重复缩放。
+8. 重新记录 Scene Units、22 个 Mesh、264 个三角形、Action/NLA 结构和材质节点链路。
+9. 静态组装姿态必须满足 Blender Z-up 坐标规则：`min Z = 0`，X/Y 水平居中。
 
 ### 导出后验证
 
-重新读取输出 GLB 并确认：
+重新读取 `lu_ban_lock_mobile_ar.temp.glb` 并确认：
 
 - 动画名称恰好包含 `Assemble` 和 `Disassemble`；
 - 两段动画都覆盖六个重命名零件；
 - 动画输入时间递增，输出数量与输入关键帧数量匹配；
 - 四元数为有限值并保持单位长度容差；
 - 静态组装世界包围盒最大尺寸为 `0.075 m ± 0.00001 m`；
-- 包围盒水平中心接近 `(0, 0)`，底面高度接近 `0`；
+- glTF/GLB 采用 Y-up；包围盒必须满足 `min Y = 0 ± 0.00001 m`，X/Z 水平中心均为 `0 ± 0.00001 m`；
+- Mesh 数量仍为 22，三角形数量仍为 264；
 - 所有 Mesh 均引用木纹材质；
 - Base Color、Normal、Roughness 贴图存在且最大边不超过 1024 px；
 - 无摄像机和灯光被意外加入。
 
+验证报告必须同时记录：
+
+- Blender 导入后的 Action/NLA 组织方式；
+- Blender 内 Z-up 尺寸、中心和 `min Z`；
+- 导出 GLB 后 Y-up 尺寸、中心和 `min Y`；
+- 六零件名称、22 个 Mesh、264 个三角形和两段动画；
+- 材质节点、UV Map 名称和三张纹理的尺寸/色彩空间；
+- 原作者 `LinLUCAS`；
+- 模型名称 `Lu Ban Lock 鲁班锁`；
+- 许可 `CC BY 4.0`；
+- 原始 Sketchfab 来源 `https://sketchfab.com/3d-models/lu-ban-lock-d7abd39400044c47981fe94565301aa3`；
+- 优化内容是对上述第三方模型的尺寸、命名、原点、UV 和材质处理，不得描述为完全原创模型。
+
 ## 导出设置
 
-使用 Blender glTF 2.0 导出器输出单文件 GLB：
+使用 Blender glTF 2.0 导出器先输出临时单文件 GLB：
 
 - Format：GLB
 - Include：当前场景中的模型对象
@@ -154,7 +194,9 @@ UV 根据每个逻辑零件的局部坐标生成，使纹理沿零件长轴连�
 - Shape Keys / Skinning：无需额外启用
 - Draco：不启用；模型几何本身极小，避免增加移动端解码依赖
 
-导出前先保存 `.blend`。导出目标存在时先停止并报告，不静默覆盖。
+导出前先保存 `.blend`。临时导出路径固定为 `outputs\lu_ban_lock_mobile_ar.temp.glb`。导出目标存在时先停止并报告，不静默覆盖。
+
+临时 GLB 通过全部导出后验证后，确认正式路径不存在，再在同一 `outputs` 目录内将临时文件原子重命名为 `lu_ban_lock_mobile_ar.glb`。验证失败时不得创建正式文件名。
 
 ## 错误处理和回退
 
@@ -163,7 +205,12 @@ UV 根据每个逻辑零件的局部坐标生成，使纹理沿零件长轴连�
 - 找不到 `Assemble` 或 `Disassemble`：停止，不导出无动画版本。
 - Poly Haven 下载失败或缺少 Base Color、Normal、Roughness：停止，不以程序化材质替代已批准方案。
 - 1K 贴图实际尺寸超过 1024 px：在 Blender 内复制并缩小到最长边 1024 px，再连接缩小后的图像。
-- 动画验证、尺寸验证或原点验证失败：保留 `.blend` 供诊断，不把 GLB 标记为完成。
+- 动画验证、尺寸验证、原点验证、UV/材质验证或拓扑计数验证失败：
+  - 保存 `outputs\diagnostics\lu_ban_lock_mobile_ar.<YYYYMMDD-HHMMSS>.diagnostic.blend`；
+  - 若临时 GLB 已经产生，将其保留为 `outputs\diagnostics\lu_ban_lock_mobile_ar.<YYYYMMDD-HHMMSS>.temp.glb`；导入门禁失败时禁止为满足此项而继续导出；
+  - 输出同一时间戳的 `.validation.json` 和 `.validation.md`；
+  - 不创建 `lu_ban_lock_mobile_ar.glb`。
+- 成功时也输出固定名称的 JSON 和 Markdown 验证报告，然后才原子重命名临时 GLB。
 - 任一步骤均不得写入源 GLB 路径。
 
 ## 验收标准
@@ -171,13 +218,14 @@ UV 根据每个逻辑零件的局部坐标生成，使纹理沿零件长轴连�
 只有同时满足以下条件才算完成：
 
 1. 原始 GLB 的 SHA-256 仍为 `8E215A86264DAFC2A3A9CF43406E2DB2470EEF0A150264DB91E98EB8BD655A5B`。
-2. 输出 `.blend` 和 `.glb` 均存在于 `outputs` 目录。
+2. 输出 `.blend`、正式 `.glb`、JSON 验证报告和 Markdown 验证报告均存在于规定目录，且 `.temp.glb` 已通过原子重命名消失。
 3. Scene Units 为 Metric / Unit Scale 1.0 / Millimeters。
 4. 输出 GLB 最大静态组装尺寸为 `0.075 m ± 0.00001 m`。
-5. 模型水平居中，底面位于 AR 地面原点。
+5. Blender 内满足 Z-up：`min Z=0`、X/Y 居中；GLB 内满足 Y-up：`min Y=0`、X/Z 居中。
 6. 六个目标节点使用批准的新名称。
 7. `Assemble` 和 `Disassemble` 均存在、覆盖六个零件并通过连续性检查。
-8. 22 个 Mesh 仍保留且全部使用 `MAT_LB_LightOak`。
-9. GLB 内含 Base Color、Normal、Roughness，贴图最长边均不超过 1024 px。
+8. 22 个 Mesh 和 264 个三角形仍保留，且全部使用 `MAT_LB_LightOak`。
+9. 材质显式使用 `LB_WoodUV` →共享 Mapping 链路，Base Color、Normal、Roughness 共用该链路；GLB 内三张贴图最长边均不超过 1024 px。
 10. 输出不含摄像机、灯光、骨骼或 Morph target。
 11. 未静默覆盖任何已有输出文件。
+12. 验证报告完整记录来源作者、模型名、CC BY 4.0 许可和原始 Sketchfab URL，且未把优化模型描述为完全原创。
