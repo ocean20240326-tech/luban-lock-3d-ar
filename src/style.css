@@ -22,7 +22,6 @@
 }
 
 html {
-  min-width: 320px;
   min-height: 100%;
   background: #f1e8d9;
   -webkit-text-size-adjust: 100%;
@@ -30,7 +29,6 @@ html {
 
 body {
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
