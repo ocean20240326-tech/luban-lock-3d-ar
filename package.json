@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "model:ar": "node scripts/create-static-ar-glb.mjs",
+    "prebuild": "npm run model:ar",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy:dist": "node scripts/verify-dist.mjs",
+    "deploy:check": "npm run test && npm run build && npm run deploy:dist",
+    "deploy:verify": "node scripts/verify-deployment.mjs"
   },
   "dependencies": {
     "@google/model-viewer": "^4.3.1"

@@ -19,18 +19,23 @@
         <div class="title-mark" aria-hidden="true"><span></span></div>
         <div>
           <p class="eyebrow">LUBAN LOCK · 3D</p>
-          <h1>六通鲁班锁</h1>
-          <p class="subtitle">用手指旋转、缩放查看模型</p>
+          <h1 id="siteTitle">六通鲁班锁</h1>
+          <p class="subtitle" id="siteSubtitle">用手指旋转、缩放查看模型</p>
         </div>
       </header>
 
       <main class="viewer-section">
-        <section class="viewer-card" aria-label="鲁班锁3D展示区域">
+        <section
+          class="viewer-card"
+          id="viewerCard"
+          aria-label="鲁班锁3D展示区域"
+        >
           <div class="viewer-frame" id="viewerFrame" data-status="checking">
             <model-viewer
               id="lubanViewer"
               alt="六通鲁班锁3D模型"
               camera-controls
+              touch-action="pan-y"
               camera-orbit="35deg 68deg 115%"
               camera-target="auto auto auto"
               field-of-view="30deg"
@@ -46,7 +51,18 @@
               interaction-prompt-threshold="2500"
               loading="eager"
               rotation-per-second="16deg"
-            ></model-viewer>
+              animation-crossfade-duration="0"
+            >
+              <button
+                class="ar-activate-button"
+                id="activateArButton"
+                slot="ar-button"
+                type="button"
+                aria-label="将鲁班锁放到现实中"
+                hidden
+                disabled
+              >放到现实中</button>
+            </model-viewer>
 
             <div
               class="status-panel loading-panel"
@@ -89,6 +105,13 @@
               >
                 重新加载
               </button>
+              <button
+                class="secondary-button error-return-button"
+                id="returnViewerErrorButton"
+                type="button"
+                aria-label="AR模型不可用时返回3D拆装模式"
+                hidden
+              >返回3D拆装</button>
             </div>
 
             <div class="orientation-hint" aria-hidden="true">
@@ -97,26 +120,142 @@
             </div>
           </div>
 
-          <div class="controls" id="controls" aria-label="3D模型控制" hidden>
-            <button
-              class="control-button"
-              id="rotationButton"
-              type="button"
-              aria-label="暂停模型自动旋转"
-              aria-pressed="true"
+          <div class="control-deck" id="controls" hidden>
+            <div class="controls" id="viewerControls" aria-label="3D模型控制">
+              <button
+                class="control-button"
+                id="rotationButton"
+                type="button"
+                aria-label="暂停模型自动旋转"
+                aria-pressed="true"
+              >
+                <span class="button-icon" aria-hidden="true">Ⅱ</span>
+                <span id="rotationButtonText">暂停旋转</span>
+              </button>
+              <button
+                class="control-button"
+                id="resetViewButton"
+                type="button"
+                aria-label="恢复模型初始视角"
+              >
+                <span class="button-icon reset-icon" aria-hidden="true">↺</span>
+                <span>恢复初始视角</span>
+              </button>
+            </div>
+
+            <div class="viewer-ar-entry" id="viewerArEntry">
+              <button
+                class="ar-entry-button"
+                id="enterArButton"
+                type="button"
+                aria-label="进入六通鲁班锁AR查看模式"
+              >手机AR查看</button>
+            </div>
+
+            <section
+              class="animation-panel"
+              id="animationPanel"
+              aria-labelledby="animationPanelTitle"
+              data-animation-state="initializing"
             >
-              <span class="button-icon" aria-hidden="true">Ⅱ</span>
-              <span id="rotationButtonText">暂停旋转</span>
-            </button>
-            <button
-              class="control-button"
-              id="resetViewButton"
-              type="button"
-              aria-label="恢复模型初始视角"
+              <div class="animation-heading">
+                <div>
+                  <p class="animation-kicker">STEP BY STEP</p>
+                  <h2 id="animationPanelTitle">拆装演示</h2>
+                </div>
+                <output class="animation-percentage" id="animationProgressText">0%</output>
+              </div>
+              <p
+                class="animation-status"
+                id="animationStatus"
+                aria-live="polite"
+                aria-atomic="true"
+                role="status"
+              >正在初始化拆装动画……</p>
+              <div
+                class="animation-progress-track"
+                id="animationProgressBar"
+                role="progressbar"
+                aria-label="拆装动画进度"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+              >
+                <span class="animation-progress-fill" id="animationProgressFill"></span>
+              </div>
+              <div class="animation-buttons" aria-label="拆装动画控制">
+                <button
+                  class="animation-button animation-button-primary"
+                  id="disassembleButton"
+                  type="button"
+                  aria-label="播放鲁班锁拆解演示"
+                  disabled
+                >拆解演示</button>
+                <button
+                  class="animation-button"
+                  id="assembleButton"
+                  type="button"
+                  aria-label="播放鲁班锁重新组装动画"
+                  disabled
+                >重新组装</button>
+                <button
+                  class="animation-button"
+                  id="pauseResumeButton"
+                  type="button"
+                  aria-label="暂停拆装动画"
+                  disabled
+                >暂停动画</button>
+                <button
+                  class="animation-button animation-button-quiet"
+                  id="resetModelButton"
+                  type="button"
+                  aria-label="将鲁班锁重置为完整组装状态"
+                  disabled
+                >重置模型</button>
+              </div>
+            </section>
+
+            <section
+              class="ar-panel"
+              id="arPanel"
+              aria-labelledby="arPanelTitle"
+              hidden
             >
-              <span class="button-icon reset-icon" aria-hidden="true">↺</span>
-              <span>恢复初始视角</span>
-            </button>
+              <p class="animation-kicker">REAL SIZE · AR</p>
+              <h2 id="arPanelTitle">放到现实桌面中</h2>
+              <button
+                class="ar-unavailable-button"
+                id="unavailableArButton"
+                type="button"
+                aria-label="当前设备暂不支持将鲁班锁放到现实中"
+                disabled
+                hidden
+              >放到现实中</button>
+              <p
+                class="ar-status"
+                id="arStatus"
+                aria-live="polite"
+                aria-atomic="true"
+                role="status"
+              >正在检查AR支持……</p>
+              <p class="ar-tracking-warning" id="arTrackingWarning" role="status" hidden>
+                暂时无法识别平面，请改善光线并对准有纹理的桌面。
+              </p>
+              <ul class="ar-instructions">
+                <li>将手机对准光线充足、有纹理的水平桌面</li>
+                <li>缓慢移动手机寻找平面</li>
+                <li>模型按约7.5厘米真实尺寸展示</li>
+                <li>当前AR版本展示完整组装状态</li>
+                <li>AR模式暂不播放拆装动画</li>
+              </ul>
+              <p class="ar-device-advice" id="arDeviceAdvice"></p>
+              <button
+                class="secondary-button ar-return-button"
+                id="returnViewerButton"
+                type="button"
+                aria-label="返回六通鲁班锁3D拆装模式"
+              >返回3D拆装</button>
+            </section>
           </div>
         </section>
       </main>

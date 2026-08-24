@@ -1,6 +1,15 @@
 .worktrees/
+.superpowers/
 __pycache__/
 *.pyc
 node_modules/
 dist/
+outputs/
 *.local
+*.log
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+.wrangler/
