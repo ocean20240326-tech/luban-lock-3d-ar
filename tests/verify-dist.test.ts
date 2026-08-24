@@ -14,6 +14,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  WECHAT_VERIFICATION,
   verifyDist,
   verifyHeadersConfiguration,
 } from '../scripts/verify-dist.mjs';
@@ -48,6 +49,10 @@ async function prepareFixture(): Promise<void> {
     path.join(root, 'dist/assets/index-abc123.js'),
     'const viewer="/models/luban-lock.glb";const ar="/models/luban-lock-ar.glb";',
   );
+  await writeFile(
+    path.join(root, 'dist', WECHAT_VERIFICATION.fileName),
+    WECHAT_VERIFICATION.content,
+  );
 }
 
 beforeEach(prepareFixture);
@@ -60,7 +65,7 @@ describe('生产构建目录验证器', () => {
   it('接受模型、资源、响应头和路径均正确的纯静态dist', async () => {
     const report = await verifyDist({ projectRoot: root });
 
-    expect(report.fileCount).toBe(6);
+    expect(report.fileCount).toBe(7);
     expect(report.animatedModel.animationNames).toEqual([
       'Assemble',
       'Disassemble',
@@ -68,6 +73,17 @@ describe('生产构建目录验证器', () => {
     expect(report.arModel.animationNames).toEqual([]);
     expect(report.headersValid).toBe(true);
     expect(report.localPathMatches).toEqual([]);
+  });
+
+  it('拒绝微信根目录验证文件内容不匹配', async () => {
+    await writeFile(
+      path.join(root, 'dist', WECHAT_VERIFICATION.fileName),
+      'WRONG_CONTENT',
+    );
+
+    await expect(verifyDist({ projectRoot: root })).rejects.toThrow(
+      /微信.*验证文件/u,
+    );
   });
 
   it('拒绝dist模型与public模型哈希不一致', async () => {

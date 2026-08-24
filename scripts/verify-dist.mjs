@@ -14,6 +14,11 @@ export const MODEL_HASHES = Object.freeze({
   ar: '06EC186E114F4B77BF38A39DF83A4C11AF1B5E3CF4BDFD606CEE3A6E615DF4EB',
 });
 
+export const WECHAT_VERIFICATION = Object.freeze({
+  fileName: '2249b344d4373f391d15491e9acb1cdb.txt',
+  content: '21950d472cee9ee2deb651e1a8861b2911c2cd2d',
+});
+
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const REQUIRED_ANIMATIONS = ['Assemble', 'Disassemble'];
 const TEXT_EXTENSIONS = new Set([
@@ -206,6 +211,7 @@ export async function verifyDist({ projectRoot = process.cwd() } = {}) {
     'models/luban-lock.glb',
     'models/luban-lock-ar.glb',
     '_headers',
+    WECHAT_VERIFICATION.fileName,
   ];
   for (const relativePath of requiredPaths) {
     try {
@@ -259,7 +265,15 @@ export async function verifyDist({ projectRoot = process.cwd() } = {}) {
     resolvedRoot,
     'public/models/luban-lock-ar.glb',
   );
-  const [sourceAnimated, sourceAr, distAnimated, distAr, html, headers] =
+  const [
+    sourceAnimated,
+    sourceAr,
+    distAnimated,
+    distAr,
+    html,
+    headers,
+    wechatVerification,
+  ] =
     await Promise.all([
       readFile(sourceAnimatedPath),
       readFile(sourceArPath),
@@ -267,7 +281,22 @@ export async function verifyDist({ projectRoot = process.cwd() } = {}) {
       readFile(path.join(distRoot, 'models/luban-lock-ar.glb')),
       readFile(path.join(distRoot, 'index.html'), 'utf8'),
       readFile(path.join(distRoot, '_headers'), 'utf8'),
+      readFile(path.join(distRoot, WECHAT_VERIFICATION.fileName)),
     ]);
+
+  if (
+    wechatVerification
+      .subarray(0, 3)
+      .equals(Buffer.from([0xef, 0xbb, 0xbf]))
+  ) {
+    fail('微信根目录验证文件不能包含UTF-8 BOM。');
+  }
+  const verificationText = wechatVerification
+    .toString('utf8')
+    .replace(/\r?\n$/u, '');
+  if (verificationText !== WECHAT_VERIFICATION.content) {
+    fail('微信根目录验证文件内容不匹配。');
+  }
 
   if (sha256(sourceAnimated) !== MODEL_HASHES.animated) {
     fail('public普通模型SHA-256不符合受保护基线。');
@@ -344,6 +373,7 @@ export async function verifyDist({ projectRoot = process.cwd() } = {}) {
     animatedModel,
     arModel,
     headersValid: true,
+    wechatVerificationValid: true,
     localPathMatches,
     conclusion: 'dist适合Cloudflare Pages纯静态部署',
   };
@@ -371,6 +401,7 @@ if (isMain) {
     console.info(`普通模型动画数量：${report.animatedModel.animationNames.length}`);
     console.info(`AR模型动画数量：${report.arModel.animationNames.length}`);
     console.info('_headers验证：通过');
+    console.info('微信根目录验证文件：通过');
     console.info('本地路径与秘密扫描：未发现问题');
     console.info(`最终结论：${report.conclusion}`);
   } catch (error) {
