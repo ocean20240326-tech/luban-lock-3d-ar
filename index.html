@@ -11,6 +11,27 @@
       content="在线旋转、缩放查看六通鲁班锁3D模型，无需下载App。"
     />
     <meta name="theme-color" content="#f3eadb" />
+    <script id="earlyModelPreload">
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const arMode = params.get('mode') === 'ar';
+        if (arMode && params.has('simulate-ar-missing')) {
+          return;
+        }
+
+        const preload = document.createElement('link');
+        preload.id = 'modelPreload';
+        preload.rel = 'preload';
+        preload.as = 'fetch';
+        preload.type = 'model/gltf-binary';
+        preload.href = arMode
+          ? '/models/luban-lock-ar.glb'
+          : '/models/luban-lock.glb';
+        preload.crossOrigin = 'anonymous';
+        preload.fetchPriority = 'high';
+        document.head.append(preload);
+      })();
+    </script>
     <title>六通鲁班锁｜手机端3D展示</title>
   </head>
   <body>
