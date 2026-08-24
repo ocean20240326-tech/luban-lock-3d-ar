@@ -73,7 +73,7 @@ Cloudflare Pages控制台配置：
 ```text
 部署类型：Pages / Connect to Git
 Git提供商：GitHub
-生产分支：<确认后的生产分支>
+生产分支：main
 根目录：留空（仓库根目录）
 构建命令：npm run deploy:check
 构建输出目录：dist
@@ -81,19 +81,20 @@ Node版本：由 .node-version 固定为 24.15.0
 环境变量：不需要
 ```
 
-当前还没有填写或虚构GitHub仓库、Cloudflare项目名或公网地址。首次发布后应先用以下格式的 `pages.dev` 地址验证：
+当前生产站点已通过Cloudflare Pages Git集成发布，并完成自动远程检查与桌面浏览器验证：
 
 ```text
-普通模式：https://<project>.pages.dev/
-AR模式：https://<project>.pages.dev/?mode=ar
-普通模型：https://<project>.pages.dev/models/luban-lock.glb
-AR模型：https://<project>.pages.dev/models/luban-lock-ar.glb
+GitHub：https://github.com/ocean20240326-tech/luban-lock-3d-ar
+普通模式：https://luban-lock-3d-ar.pages.dev/
+AR模式：https://luban-lock-3d-ar.pages.dev/?mode=ar
+普通模型：https://luban-lock-3d-ar.pages.dev/models/luban-lock.glb
+AR模型：https://luban-lock-3d-ar.pages.dev/models/luban-lock-ar.glb
 ```
 
-获得真实HTTPS地址后运行：
+重新部署后运行：
 
 ```bash
-npm run deploy:verify -- https://<project>.pages.dev
+npm run deploy:verify -- https://luban-lock-3d-ar.pages.dev
 ```
 
 `public/_headers` 为GLB设置 `model/gltf-binary`、跨源读取和适中缓存，为Vite哈希资源设置一年 `immutable` 缓存。没有添加SPA catch-all或 `_redirects`，并提供顶层 `public/404.html` 关闭Cloudflare Pages的默认SPA回退；模型缺失必须保持真实404，不能回退成HTML首页。
@@ -273,7 +274,7 @@ AR模型加载并等待 `updateComplete` 后，页面先检查安全上下文，
 
 正式AR必须通过可访问模型资源的HTTPS地址在真机测试。桌面 `http://127.0.0.1` 只适合验证页面、模型和降级UI，局域网HTTP地址通常也不能作为WebXR正式测试结果。完整步骤见 [`docs/AR-TEST.md`](docs/AR-TEST.md)。
 
-当前自定义域名尚未绑定，`pages.dev` 生产地址也等待GitHub和Cloudflare账号操作。Cloudflare部署成功只代表获得HTTPS静态站点，仍不能替代iOS Safari、Android WebXR/Scene Viewer、微信、摄像头、平面识别和真实75毫米比例的真机验收。
+当前 `pages.dev` 生产地址已经通过页面、模型哈希、MIME、CORS、缓存、404和桌面浏览器验证；尚未绑定自定义域名。Cloudflare部署成功仍不能替代iOS Safari、Android WebXR/Scene Viewer、微信、摄像头、平面识别和真实75毫米比例的真机验收。
 
 ## 常见问题
 

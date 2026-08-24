@@ -11,19 +11,19 @@ Chrome DevTools的手机尺寸模拟不提供ARCore、Quick Look、真实摄像�
 1. 执行 `npm run model:ar`、`npm run test` 和 `npm run build`。
 2. 确认 `public/models/luban-lock-ar.glb` 与 `dist/models/luban-lock-ar.glb` 的SHA-256一致。
 3. 确认静态AR模型不含顶层 `animations`，原模型仍包含 `Assemble` 和 `Disassemble`。
-4. 准备可访问的HTTPS测试地址，不使用混合内容或需要登录的模型URL。尚未部署时记录为 `<pages.dev生产地址>`，不得把占位符写成已验证结果。
+4. 使用已部署的HTTPS测试地址，不使用混合内容或需要登录的模型URL。
 5. 准备刻度尺、光线充足且带纹理的水平桌面，以及约75毫米的实物参照。
 
 生产地址记录位置：
 
 ```text
-pages.dev地址：<pages.dev生产地址>
-普通页面：<pages.dev生产地址>/
-AR页面：<pages.dev生产地址>/?mode=ar
-AR模型：<pages.dev生产地址>/models/luban-lock-ar.glb
+pages.dev地址：https://luban-lock-3d-ar.pages.dev
+普通页面：https://luban-lock-3d-ar.pages.dev/
+AR页面：https://luban-lock-3d-ar.pages.dev/?mode=ar
+AR模型：https://luban-lock-3d-ar.pages.dev/models/luban-lock-ar.glb
 ```
 
-得到真实地址后先执行 `npm run deploy:verify -- <pages.dev生产地址>`，确认页面、模型哈希、MIME、CORS、缓存和缺失模型404，再开始真机测试。
+开始真机测试前先执行 `npm run deploy:verify -- https://luban-lock-3d-ar.pages.dev`，确认页面、模型哈希、MIME、CORS、缓存和缺失模型404。该远程检查已于2026-08-24通过，但下方真机项目仍需在实际设备上执行。
 
 ## iOS Safari / Quick Look
 
