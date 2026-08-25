@@ -28,7 +28,10 @@ import {
   shouldShowUnavailableArButton,
   type ArState,
 } from './ar-state';
-import { checkModelAvailability } from './model-availability';
+import {
+  assignModelSourceAfterUpdate,
+  coordinateModelAvailability,
+} from './model-availability';
 import { configureModelViewerForMode } from './model-viewer-mode';
 import { animationsForDevelopment } from './model-config';
 import './style.css';
@@ -367,7 +370,19 @@ async function loadModel(forceReload = false): Promise<void> {
     appMode === 'ar' &&
     searchParams.has('simulate-ar-missing');
   const availabilityPath = simulateArMissing ? `${modelPath}.missing` : modelPath;
-  const availability = await checkModelAvailability(availabilityPath);
+  const startLoading = () => {
+    renderStatus('loading');
+    retryCount += forceReload ? 1 : 0;
+    const source = forceReload ? `${modelPath}?retry=${retryCount}` : modelPath;
+    void assignModelSourceAfterUpdate(viewer, source).catch((error) => {
+      console.error('无法开始加载3D模型', { url: source, error });
+      renderStatus('error');
+    });
+  };
+  const availability = await coordinateModelAvailability(availabilityPath, {
+    eager: appMode === 'ar' && !simulateArMissing,
+    startLoading,
+  });
   if (availability === 'missing') {
     renderStatus('missing');
     return;
@@ -377,10 +392,6 @@ async function loadModel(forceReload = false): Promise<void> {
     renderStatus('error');
     return;
   }
-
-  renderStatus('loading');
-  retryCount += forceReload ? 1 : 0;
-  viewer.src = forceReload ? `${modelPath}?retry=${retryCount}` : modelPath;
 }
 
 viewer.addEventListener('progress', (event: Event) => {
@@ -450,6 +461,9 @@ viewer.addEventListener('error', (event: Event) => {
   animationController?.prepareForModelLoad();
   arController?.prepareForModelLoad();
   console.error('3D模型加载失败', { url: viewer.src, event });
+  if (status === 'missing') {
+    return;
+  }
   renderStatus('error');
 });
 

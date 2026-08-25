@@ -5,6 +5,16 @@ export type FetchModel = (
   init?: RequestInit,
 ) => Promise<Response>;
 
+export interface ModelAvailabilityCoordination {
+  eager: boolean;
+  startLoading(): void;
+}
+
+export interface ModelSourceTarget {
+  src: string | null;
+  updateComplete: Promise<unknown>;
+}
+
 export async function checkModelAvailability(
   url: string,
   fetchModel: FetchModel = fetch,
@@ -24,4 +34,31 @@ export async function checkModelAvailability(
   } catch {
     return 'error';
   }
+}
+
+export async function coordinateModelAvailability(
+  url: string,
+  coordination: ModelAvailabilityCoordination,
+  fetchModel: FetchModel = fetch,
+): Promise<ModelAvailability> {
+  const availabilityPromise = checkModelAvailability(url, fetchModel);
+
+  if (coordination.eager) {
+    coordination.startLoading();
+  }
+
+  const availability = await availabilityPromise;
+  if (availability === 'available' && !coordination.eager) {
+    coordination.startLoading();
+  }
+
+  return availability;
+}
+
+export async function assignModelSourceAfterUpdate(
+  viewer: ModelSourceTarget,
+  source: string,
+): Promise<void> {
+  await viewer.updateComplete;
+  viewer.src = source;
 }

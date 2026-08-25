@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { configureModelViewerForMode } from '../src/model-viewer-mode';
+import { AR_MODEL_POSTER_PATH } from '../src/model-config';
 
 class FakeAttributeTarget {
   readonly attributes = new Map<string, string>();
@@ -35,6 +36,7 @@ describe('model-viewer 模式属性', () => {
       'ar-scale': 'fixed',
       'ar-placement': 'floor',
       alt: '六通鲁班锁AR模型',
+      poster: AR_MODEL_POSTER_PATH,
     });
     expect(target.attributes.has('scale')).toBe(false);
     expect(target.attributes.has('ios-src')).toBe(false);
@@ -51,6 +53,7 @@ describe('model-viewer 模式属性', () => {
     expect(target.attributes.has('ar-modes')).toBe(false);
     expect(target.attributes.has('ar-scale')).toBe(false);
     expect(target.attributes.has('ar-placement')).toBe(false);
+    expect(target.attributes.has('poster')).toBe(false);
     expect(target.attributes.get('alt')).toBe('六通鲁班锁3D模型');
   });
 });
